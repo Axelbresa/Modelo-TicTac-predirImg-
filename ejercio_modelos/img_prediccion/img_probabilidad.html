@@ -1,17 +1,33 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <link rel="stylesheet" href="style.css">
+    <title>Clasificación de Imágenes con MobileNet</title>
+  </head>
+  <body>
+    <h1>Elija una imagen</h1>
+    <input type="file" accept="image/*" onchange="handleFileUpload(event)">
+    <p id="status"></p>
+
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.0.0/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@1.0.0"></script>
     <script>
-      // Cargar el modelo de Mobilenet al inicio
       let model;
-      mobilenet.load().then(m => {
-        model = m;
-      });
+      const status = document.getElementById('status');
 
-      function handleFileUpload(event) {
+      async function loadModel() {
+        try {
+          status.textContent = 'Cargando modelo...';
+          model = await mobilenet.load();
+          status.textContent = 'Modelo cargado.';
+        } catch (err) {
+          status.textContent = 'Fallo al cargar el modelo.';
+          console.error('Error al cargar el modelo:', err);
+        }
+      }
+
+      loadModel();
+
+      async function handleFileUpload(event) {
         const file = event.target.files[0];
         if (file) {
           const reader = new FileReader();
@@ -19,19 +35,20 @@
             const img = document.createElement('img');
             img.id = 'myImage';
             img.src = e.target.result;
-            img.onload = function() {
+            img.onload = async function() {
               document.body.appendChild(img);
-              classifyImage(img);
+              await classifyImage(img);
             };
           };
           reader.readAsDataURL(file);
         }
       }
 
-      function classifyImage(img) {
+      async function classifyImage(img) {
         if (model) {
-          model.classify(img).then(predictions => {
-            console.log('Predictions: ', predictions);
+          try {
+            const predictions = await model.classify(img);
+            console.log('Predicciones: ', predictions);
             let foundATruck = false;
             predictions.forEach(p => {
               if (p.className.includes("truck")) {
@@ -39,17 +56,16 @@
               }
             });
             if (foundATruck) {
-              alert("TRUCK DETECTED!");
-            }
-          });
+              status.textContent = "¡imagen detectados!";
+            } 
+          } catch (err) {
+            status.textContent = 'Error en la clasificación.';
+            console.error('Error durante la clasificación:', err);
+          }
         } else {
-          console.error('Model not loaded yet.');
+          console.error('El modelo aún no está cargado.');
         }
       }
     </script>
-  </head>
-  <body>
-    <h1>Elija una imagen</h1>
-    <input type="file" accept="image/*" onchange="handleFileUpload(event)">
   </body>
 </html>
