@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.0.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@1.0.0"></script>
+    <script>
+      // Cargar el modelo de Mobilenet al inicio
+      let model;
+      mobilenet.load().then(m => {
+        model = m;
+      });
+
+      function handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const img = document.createElement('img');
+            img.id = 'myImage';
+            img.src = e.target.result;
+            img.onload = function() {
+              document.body.appendChild(img);
+              classifyImage(img);
+            };
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+
+      function classifyImage(img) {
+        if (model) {
+          model.classify(img).then(predictions => {
+            console.log('Predictions: ', predictions);
+            let foundATruck = false;
+            predictions.forEach(p => {
+              if (p.className.includes("truck")) {
+                foundATruck = true;
+              }
+            });
+            if (foundATruck) {
+              alert("TRUCK DETECTED!");
+            }
+          });
+        } else {
+          console.error('Model not loaded yet.');
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Elija una imagen</h1>
+    <input type="file" accept="image/*" onchange="handleFileUpload(event)">
+  </body>
+</html>
