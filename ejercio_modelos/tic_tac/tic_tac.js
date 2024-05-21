@@ -54,6 +54,7 @@ function resetGame() {
     cells.forEach(cell => {
         cell.textContent = '';
     });
+    console.clear()
     currentPlayer = 'X';
 }
 
